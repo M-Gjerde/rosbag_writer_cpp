@@ -46,8 +46,8 @@ public:
         header.set_uint32("chunk_count", 1);
         int size = header.write(bio, RecordType::BAGHEADER);
         int padsize = 4096 - 4 - size;
-        //bio.write(reinterpret_cast<const char *>(serialize_uint32(padsize).data()), 4);
-        //bio.write(std::string(padsize, ' ').c_str(), padsize);
+        bio.write(reinterpret_cast<const char *>(serialize_uint32(padsize).data()), 4);
+        bio.write(std::string(padsize, ' ').c_str(), padsize);
     }
 
     void write(Connection &connection, int timestamp, const std::string &data) {
@@ -66,20 +66,20 @@ public:
         chunk.data.write(data.c_str(), data.size());
 
         if (chunk.data.tellp() > chunk_threshold) {
-            //write_chunk(chunk);
+            write_chunk(chunk);
         }
     }
 
 // Continuing within the RosbagWriter class from the previous conversions...
 
-/*
+
     void write_chunk(WriteChunk& chunk) {
         if (!bio.is_open()) {
             std::cerr << "File not open!" << std::endl;
             return;
         }
 
-        int size = static_cast<int>(chunk.data.tell());
+        int size = static_cast<int>(chunk.data.tellp());
         if (size > 0) {
             chunk.pos = static_cast<int>(bio.tellp());
 
@@ -89,7 +89,8 @@ public:
             header.write(bio, RecordType::CHUNK);
 
             std::string data = chunk.data.str();
-            bio.write(serialize_uint32(data.size()).c_str(), 4);
+            bio.write(reinterpret_cast<const char *>(serialize_uint32(data.size()).data()), 4);
+
             bio.write(data.c_str(), data.size());
 
             for (const auto& [cid, items] : chunk.connections) {
@@ -98,10 +99,12 @@ public:
                 idxHeader.set_uint32("conn", cid);
                 idxHeader.set_uint32("count", items.size());
                 idxHeader.write(bio, RecordType::IDXDATA);
-                bio.write(serialize_uint32(items.size() * 12).c_str(), 4);
+                bio.write(reinterpret_cast<const char *>(serialize_uint32(items.size() * 12).data()), 4);
 
                 for (const auto& [time, offset] : items) {
-                    bio.write((serialize_time(time) + serialize_uint32(offset)).c_str(), 16);
+                    bio.write(reinterpret_cast<const char *>(serialize_time(time).data()), 12);
+                    bio.write(reinterpret_cast<const char *>(serialize_uint32(offset).data()), 4);
+
                 }
             }
 
@@ -109,7 +112,7 @@ public:
             chunks.push_back(WriteChunk());
         }
     }
-    */
+
 
     Connection add_connection(const std::string &topic, const std::string &msg_type) {
         std::string msg_def, md5sum;
@@ -148,11 +151,12 @@ public:
     }
 
     void close() {
+        std::cout << "Closing" << std::endl;
         if (!bio.is_open()) return;
 
         for (WriteChunk &chunk: chunks) {
             if (chunk.pos == -1) {
-                //write_chunk(chunk);
+                write_chunk(chunk);
             }
         }
 
@@ -252,5 +256,6 @@ int main() {
     auto conn2 = writer.add_connection("/hello_two", "std_msgs/String");
     writer.write(conn2, currentTimeNs, "Hello two");
     writer.write(conn2, currentTimeNs + 1, "Hello two again");
+    writer.close();
     return 0;
 }
