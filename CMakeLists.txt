@@ -18,11 +18,22 @@ FetchContent_MakeAvailable(googletest)
 # Enable testing
 enable_testing()
 
+# OpenSSL
+find_package(OpenSSL REQUIRED)
+include_directories(${OPENSSL_INCLUDE_DIR})
+
 # Add directories
 add_subdirectory(tests)
 
 # Add the include directories for the test executable
-add_executable(rosbags_cpp src/main.cpp)
-target_include_directories(rosbags_cpp PRIVATE ${CMAKE_SOURCE_DIR}/include)
+add_executable(rosbag_writer src/main.cpp)
+target_include_directories(rosbag_writer PRIVATE ${CMAKE_SOURCE_DIR}/include)
 
-target_link_libraries(rosbags_cpp -lssl -lcrypto)
+
+if (UNIX) ## Linux
+    target_link_libraries(rosbag_writer -lssl -lcrypto)
+endif ()
+
+if (WIN32)
+    target_link_libraries(rosbag_writer OpenSSL::SSL OpenSSL::Crypto)
+endif ()

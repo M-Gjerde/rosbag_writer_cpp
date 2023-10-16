@@ -34,6 +34,7 @@ public:
         if (!bio) {
             std::cerr << "Error: Could not open file " << path << std::endl;
             std::cerr << "System error: " << strerror(errno) << std::endl;
+            exit(1);
         }
     }
 
@@ -45,13 +46,13 @@ public:
         header.set_uint32("chunk_count", 1);
         int size = header.write(bio, RecordType::BAGHEADER);
         int padsize = 4096 - 4 - size;
-        bio.write(reinterpret_cast<const char *>(serialize_uint32(padsize).data()), 4);
-        bio.write(std::string(padsize, ' ').c_str(), padsize);
+        //bio.write(reinterpret_cast<const char *>(serialize_uint32(padsize).data()), 4);
+        //bio.write(std::string(padsize, ' ').c_str(), padsize);
     }
 
     void write(Connection &connection, int timestamp, const std::string &data) {
         WriteChunk &chunk = chunks.back();
-        chunk.connections[connection.id].push_back(std::make_pair(timestamp, static_cast<int>(chunk.data.tellp())));
+        chunk.connections[connection.id].emplace_back(timestamp, static_cast<int>(chunk.data.tellp()));
 
         chunk.start = std::min(chunk.start, timestamp);
         chunk.end = std::max(chunk.end, timestamp);
@@ -125,7 +126,7 @@ public:
 
         std::cout << "md5: " << md5sum << " for " << msg_type << std::endl;
         Connection connection(connections.size(), topic, msg_type, md5sum, msg_def, -1);
-
+//
         auto &chunkBio = chunks.back().data;
         write_connection(connection, chunkBio);
         connections.push_back(connection);
@@ -246,7 +247,7 @@ int main() {
     auto header_conn = writer.add_connection("/temp", "sensor_msgs/Temperature");
     writer.write(header_conn, currentTimeNs, temperature_dummy());
     */
-    RosbagWriter writer("out.bag");
+    RosbagWriter writer("../out.bag");
     writer.open();
     auto conn2 = writer.add_connection("/hello_two", "std_msgs/String");
     writer.write(conn2, currentTimeNs, "Hello two");

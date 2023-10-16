@@ -43,7 +43,14 @@ struct Connection {
     std::string md5sum;
     std::string msgdef;
     int msgcount;
-    void* owner;  // object type is translated to void pointer for simplicity
+    void* owner = nullptr;  // object type is translated to void pointer for simplicity
+    Connection(int id, const std::string &topic, const std::string &msgtype, const std::string &md5Sum,
+               const std::string &msgdef, int msgcount) : id(id), topic(topic), msgtype(msgtype),
+                                                                       md5sum(md5Sum), msgdef(msgdef),
+                                                                       msgcount(msgcount) {
+
+    }
+
 };
 
 // RecordType enum class
