@@ -181,6 +181,8 @@ void RosbagWriter::close() {
 }
 };
 
+
+/*
 int main() {
     std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
     auto duration = now.time_since_epoch();
@@ -220,3 +222,4 @@ int main() {
 
     return 0;
 }
+*/
