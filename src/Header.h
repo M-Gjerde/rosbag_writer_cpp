@@ -4,6 +4,7 @@
 #include <map>
 #include <sstream>
 #include <iostream>
+
 namespace CRLRosWriter {
 
 // Serialization helper functions

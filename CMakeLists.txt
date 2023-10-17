@@ -5,14 +5,11 @@ set(CMAKE_CXX_STANDARD 20)
 
 option(BUILD_TESTS "Build tests for rosbag_writer_cpp" ON)
 
-
 # OpenSSL
 find_package(OpenSSL REQUIRED)
 include_directories(${OPENSSL_INCLUDE_DIR})
 
-
 if (BUILD_TESTS)
-
     # GTest
     include(FetchContent)
 
@@ -34,7 +31,7 @@ endif ()
 
 # Add the include directories for the test executable
 add_library(rosbag_cpp_writer src/RosbagWriter.h)
-target_include_directories(rosbag_cpp_writer PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_include_directories(rosbag_cpp_writer PRIVATE ${CMAKE_SOURCE_DIR}/src)
 set_target_properties(rosbag_cpp_writer PROPERTIES LINKER_LANGUAGE CXX)
 
 
