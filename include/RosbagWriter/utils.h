@@ -7,7 +7,7 @@
 
 namespace CRLRosWriter {
 
-    std::string computeMD5(const std::string &content) {
+    static std::string computeMD5(const std::string &content) {
         EVP_MD_CTX *context = EVP_MD_CTX_new();
         const EVP_MD *md = EVP_md5();
         unsigned char md_value[EVP_MAX_MD_SIZE];
@@ -25,7 +25,7 @@ namespace CRLRosWriter {
         return output;
     }
 
-    std::string normalizeDef(const std::string &def) {
+    static std::string normalizeDef(const std::string &def) {
         std::stringstream ss(def);
         std::stringstream result;
         std::string line;
@@ -63,13 +63,13 @@ namespace CRLRosWriter {
         return result.str();
     }
 
-    std::pair<std::string, std::string> getStringMd5sum() {
+    static std::pair<std::string, std::string> getStringMd5sum() {
         std::string string_msg_def = "string data";
         std::string string_md5sum = computeMD5(string_msg_def);
         return {string_msg_def, string_md5sum};
     }
 
-    std::pair<std::string, std::string> getHeaderDef() {
+    static std::pair<std::string, std::string> getHeaderDef() {
         std::string header_msg_def = "uint32 seq\n"
                                      "time stamp\n"
                                      "string frame_id";
@@ -79,7 +79,7 @@ namespace CRLRosWriter {
         return {normalized_header_message_def, header_generated_md5sum};
     }
 
-    std::pair<std::string, std::string> getImageMd5sum() {
+    static std::pair<std::string, std::string> getImageMd5sum() {
         auto [header_def, header_md5sum] = getHeaderDef();
         std::string image_msg_def = header_md5sum + " header\n"
                                                     "uint32 height\n"
@@ -94,7 +94,7 @@ namespace CRLRosWriter {
         return {normalized_image_message_def, image_md5sum};
     }
 
-    std::pair<std::string, std::string> getTemperatureDef() {
+    static std::pair<std::string, std::string> getTemperatureDef() {
         auto [header_def, header_md5sum] = getHeaderDef();
         std::string tmp_msg_def = header_md5sum + R"( header
     float64 temperature

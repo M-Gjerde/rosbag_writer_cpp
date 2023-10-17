@@ -8,11 +8,11 @@
 namespace CRLRosWriter {
 
 // Serialization helper functions
-    std::vector<uint8_t> serialize_uint8(uint8_t val) {
+    static std::vector<uint8_t> serialize_uint8(uint8_t val) {
         return {val};
     }
 
-    std::vector<uint8_t> serialize_int32(int32_t val) {
+    static std::vector<uint8_t> serialize_int32(int32_t val) {
         std::vector<uint8_t> bytes(4);
         for (int i = 0; i < 4; ++i) {
             bytes[i] = (val >> (i * 8)) & 0xFF;
@@ -20,7 +20,7 @@ namespace CRLRosWriter {
         return bytes;
     }
 
-    std::vector<uint8_t> serialize_uint32(uint32_t val) {
+    static std::vector<uint8_t> serialize_uint32(uint32_t val) {
         std::vector<uint8_t> bytes(4);
         for (int i = 0; i < 4; ++i) {
             bytes[i] = (val >> (i * 8)) & 0xFF;
@@ -28,7 +28,7 @@ namespace CRLRosWriter {
         return bytes;
     }
 
-    std::vector<uint8_t> serialize_uint64(uint64_t val) {
+    static std::vector<uint8_t> serialize_uint64(uint64_t val) {
         std::vector<uint8_t> bytes(8);
         for (int i = 0; i < 8; ++i) {
             bytes[i] = (val >> (i * 8)) & 0xFF;
@@ -36,7 +36,7 @@ namespace CRLRosWriter {
         return bytes;
     }
 
-    std::vector<uint8_t> serialize_float64(double val) {
+    static std::vector<uint8_t> serialize_float64(double val) {
         static_assert(sizeof(double) * CHAR_BIT == 64, "64-bit double is assumed.");
         std::vector<uint8_t> bytes(8);
         auto *bytePtr = reinterpret_cast<uint8_t *>(&val);
@@ -47,7 +47,7 @@ namespace CRLRosWriter {
     }
 
 
-    std::vector<uint8_t> serialize_time(int64_t val) {
+    static std::vector<uint8_t> serialize_time(int64_t val) {
         int32_t sec = static_cast<int32_t>(val / 1000000000);
         int32_t nsec = static_cast<int32_t>(val % 1000000000);
 

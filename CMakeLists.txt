@@ -30,8 +30,8 @@ endif ()
 
 
 # Add the include directories for the test executable
-add_library(rosbag_cpp_writer src/RosbagWriter.h)
-target_include_directories(rosbag_cpp_writer PRIVATE ${CMAKE_SOURCE_DIR}/src)
+add_library(rosbag_cpp_writer src/RosbagWriter.cpp)
+target_include_directories(rosbag_cpp_writer PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 set_target_properties(rosbag_cpp_writer PROPERTIES LINKER_LANGUAGE CXX)
 
 
