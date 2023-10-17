@@ -180,3 +180,43 @@ void RosbagWriter::close() {
     bio.write(std::string(padsize, ' ').c_str(), padsize);
 }
 };
+
+int main() {
+    std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
+    auto duration = now.time_since_epoch();
+    int64_t nanoseconds = std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count();
+
+
+    CRLRosWriter::RosbagWriter writer("../out.bag");
+    writer.open();
+    auto conn2 = writer.add_connection("/hello_two", "std_msgs/String");
+
+    std::string str = "My man";
+    std::vector<uint8_t> d1(str.begin(), str.end());
+    writer.write(conn2, nanoseconds, d1);
+//
+    //std::string str2 = "My man Hello two again";
+    //std::vector<uint8_t> d2(str2.begin(), str2.end());
+//
+
+    //writer.write(conn2,nanoseconds + int64_t(2), d2);
+//
+    //auto header_connection = writer.add_connection("/header", "std_msgs/Header");
+    //writer.write(header_connection, nanoseconds + int64_t(1), header_dummy());
+/*
+    auto image_connection = writer.add_connection("/images", "sensor_msgs/Image");
+
+    for (int i = 0; i < 6; ++i) {
+        printf("Loading image: %d\n", i);
+        int64_t time = nanoseconds + int64_t(i * 1e+9);
+
+        writer.write(image_connection, time, image_dummy(i));
+    }
+    */
+
+
+    //auto header_conn = writer.add_connection("/temp", "sensor_msgs/Temperature");
+    //writer.write(header_conn, nanoseconds + int64_t(9e8), temperature_dummy());
+
+    return 0;
+}
