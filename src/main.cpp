@@ -13,13 +13,14 @@
 
 #include <Header.h>
 #include <utils.h>
+#include "opencv4/opencv2/opencv.hpp"
 
 struct WriteChunk {
     std::ostringstream data;
-    int pos;
-    int start;
-    int end;
-    std::unordered_map<int, std::vector<std::pair<int, int>>> connections;
+    int64_t pos;
+    int64_t start;
+    int64_t end;
+    std::unordered_map<int, std::vector<std::pair<int64_t, int>>> connections;
 
     WriteChunk() : pos(-1), start(INT_MAX), end(0) {
         data = std::ostringstream(std::ios::binary);
@@ -50,7 +51,7 @@ public:
         bio.write(std::string(padsize, ' ').c_str(), padsize);
     }
 
-    void write(Connection &connection, int timestamp, const std::string &data) {
+    void write(Connection &connection, int64_t timestamp, std::vector<uint8_t> data) {
         WriteChunk &chunk = chunks.back();
         chunk.connections[connection.id].emplace_back(timestamp, static_cast<int>(chunk.data.tellp()));
 
@@ -63,7 +64,7 @@ public:
 
         header.write(chunk.data, RecordType::MSGDATA);
         chunk.data.write(reinterpret_cast<const char *>(serialize_uint32(data.size()).data()), 4);
-        chunk.data.write(data.c_str(), data.size());
+        chunk.data.write(reinterpret_cast<const char *>(data.data()), data.size());
 
         if (chunk.data.tellp() > chunk_threshold) {
             write_chunk(chunk);
@@ -89,8 +90,8 @@ public:
             header.write(bio, RecordType::CHUNK);
 
             std::string data = chunk.data.str();
-            bio.write(reinterpret_cast<const char *>(serialize_uint32(data.size()).data()), 4);
 
+            bio.write(reinterpret_cast<const char *>(serialize_uint32(data.size()).data()), 4);
             bio.write(data.c_str(), data.size());
 
             for (const auto& [cid, items] : chunk.connections) {
@@ -102,14 +103,14 @@ public:
                 bio.write(reinterpret_cast<const char *>(serialize_uint32(items.size() * 12).data()), 4);
 
                 for (const auto& [time, offset] : items) {
-                    bio.write(reinterpret_cast<const char *>(serialize_time(time).data()), 12);
+                    bio.write(reinterpret_cast<const char *>(serialize_time(time).data()), 8);
                     bio.write(reinterpret_cast<const char *>(serialize_uint32(offset).data()), 4);
 
                 }
             }
 
             chunk.data.clear();
-            chunks.push_back(WriteChunk());
+            chunks.emplace_back();
         }
     }
 
@@ -200,6 +201,8 @@ public:
     }
 
     ~RosbagWriter() {
+        close();
+
         if (bio.is_open()) {
             bio.close();
         }
@@ -214,48 +217,136 @@ private:
     int chunk_threshold;
 };
 
-/*
-std::string header_dummy() {
-    int seq = 1;
-    std::string seq_serialized = serialize_uint32(seq);
+
+std::vector<uint8_t> header_dummy() {
+    uint32_t seq = 1;
+    std::vector<uint8_t> seq_serialized = serialize_uint32(seq);
 
     auto currentTime = std::chrono::system_clock::now();
     auto currentTimeNs = std::chrono::duration_cast<std::chrono::nanoseconds>(currentTime.time_since_epoch());
-    int secs = static_cast<int>(currentTimeNs.count() / 1'000'000'000);
-    int nsecs = static_cast<int>(currentTimeNs.count() % 1'000'000'000);
+    int32_t secs = static_cast<int>(currentTimeNs.count() / 1'000'000'000);
+    uint32_t nsecs = static_cast<int>(currentTimeNs.count() % 1'000'000'000);
 
-    std::string stamp_secs = serialize_int32(secs);
-    std::string stamp_nsecs = serialize_uint32(nsecs);
-    std::string frame_id = "Magnus' Frame ID";
-    std::string frame_id_length = serialize_uint32(frame_id.size());
+    std::vector<uint8_t> stamp_secs = serialize_uint32(secs);
+    std::vector<uint8_t> stamp_nsecs = serialize_uint32(nsecs);
+    std::string str = "Magnus' Frame ID";
+    std::vector<uint8_t> frame_id(str.begin(), str.end());
+    std::vector<uint8_t> frame_id_length = serialize_uint32(frame_id.size());
 
-    return seq_serialized + stamp_secs + stamp_nsecs + frame_id_length + frame_id;
+    std::vector<uint8_t> output;
+    output.insert(output.end(), seq_serialized.begin(), seq_serialized.end());
+    output.insert(output.end(), stamp_secs.begin(), stamp_secs.end());
+    output.insert(output.end(), stamp_nsecs.begin(), stamp_nsecs.end());
+    output.insert(output.end(), frame_id_length.begin(), frame_id_length.end());
+    output.insert(output.end(), frame_id.begin(), frame_id.end());
+
+
+    return output;
 }
 
-std::string temperature_dummy() {
-    std::string header = header_dummy();
+std::vector<uint8_t> temperature_dummy() {
+    std::vector<uint8_t> header = header_dummy();
     double temp = 24.0;
     double variance = 2.0;
 
-    std::string temp_serialized = serialize_double(temp);
-    std::string var_serialized = serialize_double(variance);
+    std::vector<uint8_t> temp_serialized = serialize_float64(temp);
+    std::vector<uint8_t> var_serialized = serialize_float64(variance);
+    std::vector<uint8_t> output;
 
-    return header + temp_serialized + var_serialized;
+    output.insert(output.end(), header.begin(), header.end());
+    output.insert(output.end(), temp_serialized.begin(), temp_serialized.end());
+    output.insert(output.end(), var_serialized.begin(), var_serialized.end());
+    return output;
 }
-*/
-int main() {
-    auto currentTimeNs = std::chrono::duration_cast<std::chrono::nanoseconds>(
-            std::chrono::system_clock::now().time_since_epoch()).count();
 
-    /*
-    auto header_conn = writer.add_connection("/temp", "sensor_msgs/Temperature");
-    writer.write(header_conn, currentTimeNs, temperature_dummy());
-    */
+
+std::vector<uint8_t> image_dummy(uint32_t i) {
+    std::vector<uint8_t> header = header_dummy();
+
+    std::map<uint32_t, std::string> fileNames;
+
+    fileNames[0] = "../one.jpg";
+    fileNames[1] = "../two.jpg";
+    fileNames[2] = "../three.jpg";
+    std::string fileName = fileNames[i % 3];
+
+    cv::Mat img = cv::imread(fileName, cv::IMREAD_COLOR);
+    if (img.empty()) {
+        std::cerr << "Failed to load image: " << fileName << std::endl;
+        // Handle the error accordingly...
+        exit(1);
+    }
+
+    cv::cvtColor(img, img, cv::COLOR_BGR2RGB);
+    uint32_t height = img.rows;
+    uint32_t width = img.cols;
+    uint32_t step = width * 3;
+
+    std::vector<uint8_t> widthSer = serialize_uint32(width);
+    std::vector<uint8_t> heightSer = serialize_uint32(height);
+
+    std::string str = "rgb8";
+    std::vector<uint8_t> frame_id(str.begin(), str.end());
+    std::vector<uint8_t> frame_id_length = serialize_uint32(frame_id.size());
+    std::vector<uint8_t> bigEndian = serialize_uint8(0);
+    std::vector<uint8_t> stepSer = serialize_uint32(step);
+
+    // Serialize image
+    std::vector<uint8_t> data;
+    data.insert(data.end(), img.datastart, img.dataend);
+
+    std::vector<uint8_t> dataLen = serialize_uint32(data.size());
+
+    std::vector<uint8_t> output;
+
+    output.insert(output.end(), header.begin(), header.end());
+    output.insert(output.end(), heightSer.begin(), heightSer.end());
+    output.insert(output.end(), widthSer.begin(), widthSer.end());
+    output.insert(output.end(), frame_id_length.begin(), frame_id_length.end());
+    output.insert(output.end(), frame_id.begin(), frame_id.end());
+    output.insert(output.end(), bigEndian.begin(), bigEndian.end());
+    output.insert(output.end(), stepSer.begin(), stepSer.end());
+    output.insert(output.end(), dataLen.begin(), dataLen.end());
+    output.insert(output.end(), data.begin(), data.end());
+
+    return output;
+}
+
+
+int main() {
+    std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
+    auto duration = now.time_since_epoch();
+    int64_t nanoseconds = std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count();
+
+
     RosbagWriter writer("../out.bag");
     writer.open();
-    auto conn2 = writer.add_connection("/hello_two", "std_msgs/String");
-    writer.write(conn2, currentTimeNs, "Hello two");
-    writer.write(conn2, currentTimeNs + 1, "Hello two again");
-    writer.close();
+    //auto conn2 = writer.add_connection("/hello_two", "std_msgs/String");
+
+    //std::string str = "My man";
+    //std::vector<uint8_t> d1(str.begin(), str.end());
+//
+    //std::string str2 = "My man Hello two again";
+    //std::vector<uint8_t> d2(str2.begin(), str2.end());
+//
+    //writer.write(conn2, nanoseconds, d1);
+    //writer.write(conn2,nanoseconds + int64_t(2), d2);
+//
+    //auto header_connection = writer.add_connection("/header", "std_msgs/Header");
+    //writer.write(header_connection, nanoseconds + int64_t(1), header_dummy());
+
+    auto image_connection = writer.add_connection("/images", "sensor_msgs/Image");
+
+    for (int i = 0; i < 6; ++i){
+        printf("Loading image: %d\n", i);
+        int64_t time = nanoseconds + int64_t(i * 1e+9);
+
+        writer.write(image_connection, time, image_dummy(i));
+    }
+
+
+    //auto header_conn = writer.add_connection("/temp", "sensor_msgs/Temperature");
+    //writer.write(header_conn, nanoseconds + int64_t(9e8), temperature_dummy());
+
     return 0;
 }

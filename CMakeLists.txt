@@ -22,6 +22,12 @@ enable_testing()
 find_package(OpenSSL REQUIRED)
 include_directories(${OPENSSL_INCLUDE_DIR})
 
+# OpenCV
+find_package(Eigen3 REQUIRED)
+find_package( OpenCV REQUIRED )
+include_directories(${OpenCV_INCLUDE_DIRS})
+
+
 # Add directories
 add_subdirectory(tests)
 
@@ -31,9 +37,9 @@ target_include_directories(rosbag_writer PRIVATE ${CMAKE_SOURCE_DIR}/include)
 
 
 if (UNIX) ## Linux
-    target_link_libraries(rosbag_writer -lssl -lcrypto)
+    target_link_libraries(rosbag_writer -lssl -lcrypto  ${OpenCV_LIBS})
 endif ()
 
 if (WIN32)
-    target_link_libraries(rosbag_writer OpenSSL::SSL OpenSSL::Crypto)
+    target_link_libraries(rosbag_writer OpenSSL::SSL OpenSSL::Crypto ${OpenCV_LIBS})
 endif ()

@@ -50,7 +50,9 @@ TEST(HeaderTests, TestSetUint32) {
     // The exact way to do this depends on the structure of the binary data.
     // For this example, let's assume the uint32 value starts at byte 4 and is 4 bytes long.
 
-    const char* serialized_uint32 = &output[9];
+
+    auto pos = output.find("test");
+    const char* serialized_uint32 = &output[pos + 5];
 
     // Expected little-endian representation of 1234567890
     char expected_value[4];
@@ -109,6 +111,8 @@ TEST(HeaderTests, TestWrite) {
     ASSERT_TRUE(result.find("value1") != std::string::npos);
     ASSERT_TRUE(result.find("key2") != std::string::npos);
     ASSERT_TRUE(result.find("\xD2\x02\x96\x49") != std::string::npos);  // 1234567890 in little-endian
+
+
 }
 
 
