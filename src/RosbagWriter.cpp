@@ -132,18 +132,18 @@ namespace CRLRosWriter {
         return connection;
     }
 
-    void RosbagWriter::write_connection(const Connection &connection, std::ostream &bio) {
+    void RosbagWriter::write_connection(const Connection &connection, std::ostream &bagIO) {
         Header header;
         header.set_uint32("conn", connection.id);
         header.set_string("topic", connection.topic);
-        header.write(bio, RecordType::CONNECTION);
+        header.write(bagIO, RecordType::CONNECTION);
 
         Header msgHeader;
         msgHeader.set_string("topic", connection.topic);
-        msgHeader.set_string("type", connection.msgtype);
+        msgHeader.set_string("type", connection.msgType);
         msgHeader.set_string("md5sum", connection.md5sum);
-        msgHeader.set_string("message_definition", connection.msgdef);
-        msgHeader.write(bio);
+        msgHeader.set_string("message_definition", connection.msgDef);
+        msgHeader.write(bagIO);
     }
 
     void RosbagWriter::close() {
@@ -200,7 +200,7 @@ namespace CRLRosWriter {
 
     Connection RosbagWriter::getConnection(const std::string &topic, const std::string &msgType){
         for (const auto &conn: connections) {
-            if (conn.topic == topic && conn.msgtype == msgType)
+            if (conn.topic == topic && conn.msgType == msgType)
                 return conn;
         }
         return add_connection(topic, msgType);
@@ -209,7 +209,7 @@ namespace CRLRosWriter {
     std::vector<uint8_t> RosbagWriter::serializerRosHeader(uint32_t sequence, int64_t currentTimeNs) {
         std::vector<uint8_t> seq_serialized = serialize_uint32(sequence);
 
-        int32_t secs = static_cast<int>(currentTimeNs / 1'000'000'000);
+        auto secs = static_cast<int>(currentTimeNs / 1'000'000'000);
         uint32_t nsecs = static_cast<int>(currentTimeNs % 1'000'000'000);
 
         std::vector<uint8_t> stamp_secs = serialize_uint32(secs);
@@ -266,5 +266,5 @@ namespace CRLRosWriter {
         return output;
 
     }
-};
+}
 

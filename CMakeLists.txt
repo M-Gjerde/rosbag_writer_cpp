@@ -5,6 +5,9 @@ set(CMAKE_CXX_STANDARD 20)
 
 option(BUILD_TESTS "Build tests for rosbag_writer_cpp" ON)
 
+include(cmake/CompilerWarnings.cmake)
+
+
 # OpenSSL
 find_package(OpenSSL REQUIRED)
 include_directories(${OPENSSL_INCLUDE_DIR})
@@ -33,6 +36,7 @@ endif ()
 add_library(rosbag_cpp_writer src/RosbagWriter.cpp)
 target_include_directories(rosbag_cpp_writer PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 set_target_properties(rosbag_cpp_writer PROPERTIES LINKER_LANGUAGE CXX)
+set_project_warnings(rosbag_cpp_writer)
 
 
 if (UNIX) ## Linux

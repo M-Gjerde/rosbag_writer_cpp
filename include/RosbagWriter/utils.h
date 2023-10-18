@@ -98,6 +98,7 @@ namespace CRLRosWriter {
         return {normalized_image_message_def, image_md5sum};
     }
 
+
     static std::pair<std::string, std::string> getTemperatureDef() {
         auto [header_def, header_md5sum] = getHeaderDef();
         std::string tmp_msg_def = header_md5sum + R"( header
@@ -108,6 +109,7 @@ namespace CRLRosWriter {
         std::string tmp_md5sum = computeMD5(normalized_tmp_message_def);
         return {normalized_tmp_message_def, tmp_md5sum};
     }
+
 
 };
 
