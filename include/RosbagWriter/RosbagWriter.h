@@ -35,8 +35,8 @@ namespace CRLRosWriter {
         Connection getConnection(const std::string &topic, const std::string &msgType);
 
         std::vector<uint8_t>
-        serializeImage(uint32_t sequence, int timestamp, uint32_t width, uint32_t height, uint8_t *pData, uint32_t dataSize,
-                       const std::string &encoding, uint32_t i);
+        serializeImage(uint32_t sequence, int64_t timestamp, uint32_t width, uint32_t height, uint8_t *pData, uint32_t dataSize,
+                       const std::string &encoding, uint32_t stepSize);
 
         void open(const std::filesystem::path &filename);
         ~RosbagWriter() {
@@ -65,7 +65,7 @@ namespace CRLRosWriter {
         void close();
 
         void writeHeader();
-        std::vector<uint8_t> serializerRosHeader(uint32_t sequence, int currentTimeNs);
+        std::vector<uint8_t> serializerRosHeader(uint32_t sequence, int64_t currentTimeNs);
 
     };
 

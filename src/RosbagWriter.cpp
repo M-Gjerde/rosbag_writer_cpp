@@ -26,7 +26,6 @@ namespace CRLRosWriter {
         bio = std::fstream(path.string(), std::ios::out | std::ios::binary);
         if (!bio) {
             std::cerr << "Error: Could not open file " << path << std::endl;
-            std::cerr << "System error: " << strerror(errno) << std::endl;
             exit(1);
         }
 
@@ -58,8 +57,8 @@ namespace CRLRosWriter {
         header.set_time("time", timestamp);
 
         header.write(chunk.data, RecordType::MSGDATA);
-        chunk.data.write(reinterpret_cast<const char *>(serialize_uint32(data.size()).data()), 4);
-        chunk.data.write(reinterpret_cast<const char *>(data.data()), data.size());
+        chunk.data.write(reinterpret_cast<const char *>(serialize_uint32(static_cast<uint32_t>(data.size())).data()), 4);
+        chunk.data.write(reinterpret_cast<const char *>(data.data()), static_cast<uint32_t>(data.size()));
 
         if (chunk.data.tellp() > chunk_threshold) {
             write_chunk(chunk);
@@ -86,16 +85,16 @@ namespace CRLRosWriter {
 
             std::string data = chunk.data.str();
 
-            bio.write(reinterpret_cast<const char *>(serialize_uint32(data.size()).data()), 4);
-            bio.write(data.c_str(), data.size());
+            bio.write(reinterpret_cast<const char *>(serialize_uint32(static_cast<uint32_t>(data.size())).data()), 4);
+            bio.write(data.c_str(), static_cast<uint32_t>(data.size()));
 
             for (const auto &[cid, items]: chunk.connections) {
                 Header idxHeader;
                 idxHeader.set_uint32("ver", 1);
                 idxHeader.set_uint32("conn", cid);
-                idxHeader.set_uint32("count", items.size());
+                idxHeader.set_uint32("count", static_cast<uint32_t>(items.size()));
                 idxHeader.write(bio, RecordType::IDXDATA);
-                bio.write(reinterpret_cast<const char *>(serialize_uint32(items.size() * 12).data()), 4);
+                bio.write(reinterpret_cast<const char *>(serialize_uint32(static_cast<uint32_t>(items.size() * 12)).data()), 4);
 
                 for (const auto &[time, offset]: items) {
                     bio.write(reinterpret_cast<const char *>(serialize_time(time).data()), 8);
@@ -125,7 +124,7 @@ namespace CRLRosWriter {
         }
 
         std::cout << "md5: " << md5sum << " for " << msg_type << std::endl;
-        Connection connection(connections.size(), topic, msg_type, md5sum, msg_def, -1);
+        Connection connection(static_cast<int>(connections.size()), topic, msg_type, md5sum, msg_def, -1);
 //
         auto &chunkBio = chunks.back().data;
         write_connection(connection, chunkBio);
@@ -171,7 +170,7 @@ namespace CRLRosWriter {
             header.set_uint64("chunk_pos", chunk.pos);
             header.set_time("start_time", chunk.start == INT_MAX ? 0 : chunk.start);
             header.set_time("end_time", chunk.end);
-            header.set_uint32("count", chunk.connections.size());
+            header.set_uint32("count", static_cast<uint32_t>(chunk.connections.size()));
             header.write(bio, RecordType::CHUNK_INFO);
 
             int size = static_cast<int>(chunk.connections.size() * 8);
@@ -179,18 +178,18 @@ namespace CRLRosWriter {
 
             for (const auto &[cid, items]: chunk.connections) {
                 bio.write(reinterpret_cast<const char *>(serialize_uint32(cid).data()), 4);
-                bio.write(reinterpret_cast<const char *>(serialize_uint32(items.size()).data()), 4);
+                bio.write(reinterpret_cast<const char *>(serialize_uint32(static_cast<uint32_t>(items.size())).data()), 4);
             }
         }
 
         bio.seekp(13);
         Header indexHeader;
         indexHeader.set_uint64("index_pos", index_pos);
-        indexHeader.set_uint32("conn_count", connections.size());
-        indexHeader.set_uint32("chunk_count",
+        indexHeader.set_uint32("conn_count", static_cast<uint32_t>(connections.size()));
+        indexHeader.set_uint32("chunk_count",static_cast<uint32_t>(
                                std::count_if(chunks.begin(), chunks.end(), [](const WriteChunk &chunk) {
                                    return chunk.pos != -1;
-                               }));
+                               })));
         int size = indexHeader.write(bio, RecordType::BAGHEADER);
         int padsize = 4096 - 4 - size;
         bio.write(reinterpret_cast<const char *>(serialize_uint32(padsize).data()), 4);
@@ -207,7 +206,7 @@ namespace CRLRosWriter {
         return add_connection(topic, msgType);
     };
 
-    std::vector<uint8_t> RosbagWriter::serializerRosHeader(uint32_t sequence, int currentTimeNs) {
+    std::vector<uint8_t> RosbagWriter::serializerRosHeader(uint32_t sequence, int64_t currentTimeNs) {
         std::vector<uint8_t> seq_serialized = serialize_uint32(sequence);
 
         int32_t secs = static_cast<int>(currentTimeNs / 1'000'000'000);
@@ -217,7 +216,7 @@ namespace CRLRosWriter {
         std::vector<uint8_t> stamp_nsecs = serialize_uint32(nsecs);
         std::string str = "Header frame";
         std::vector<uint8_t> frame_id(str.begin(), str.end());
-        std::vector<uint8_t> frame_id_length = serialize_uint32(frame_id.size());
+        std::vector<uint8_t> frame_id_length = serialize_uint32(static_cast<uint32_t>(frame_id.size()));
 
         std::vector<uint8_t> output;
         output.insert(output.end(), seq_serialized.begin(), seq_serialized.end());
@@ -230,7 +229,7 @@ namespace CRLRosWriter {
 
 
     std::vector<uint8_t>
-    RosbagWriter::serializeImage(uint32_t sequence, int timestamp, uint32_t width, uint32_t height, uint8_t *pData, uint32_t dataSize,
+    RosbagWriter::serializeImage(uint32_t sequence, int64_t timestamp, uint32_t width, uint32_t height, uint8_t *pData, uint32_t dataSize,
                                  const std::string &encoding, uint32_t stepSize) {
         std::vector<uint8_t> header = serializerRosHeader(sequence, timestamp);
 
@@ -242,7 +241,7 @@ namespace CRLRosWriter {
 
         std::string str = encoding;
         std::vector<uint8_t> frame_id(str.begin(), str.end());
-        std::vector<uint8_t> frame_id_length = serialize_uint32(frame_id.size());
+        std::vector<uint8_t> frame_id_length = serialize_uint32(static_cast<uint32_t>(frame_id.size()));
         std::vector<uint8_t> bigEndian = serialize_uint8(0);
         std::vector<uint8_t> stepSer = serialize_uint32(step);
 
@@ -250,7 +249,7 @@ namespace CRLRosWriter {
         std::vector<uint8_t> data;
         data.insert(data.end(), pData, pData + dataSize);
 
-        std::vector<uint8_t> dataLen = serialize_uint32(data.size());
+        std::vector<uint8_t> dataLen = serialize_uint32(static_cast<uint32_t>(data.size()));
 
         std::vector<uint8_t> output;
 
