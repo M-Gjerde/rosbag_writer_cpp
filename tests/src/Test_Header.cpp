@@ -5,19 +5,19 @@
 #ifndef ROSBAGS_CPP_TEST_HEADER_H
 #define ROSBAGS_CPP_TEST_HEADER_H
 
-#include <Header.h>
+#include <RosbagWriter/Header.h>
 #include <gtest/gtest.h>
 #include <cstring>
 
 // Serialization tests
 TEST(SerializationTests, TestSerializeUint8) {
-    auto result = serialize_uint8(42);
+    auto result = CRLRosWriter::serialize_uint8(42);
     ASSERT_EQ(result.size(), 1);
     ASSERT_EQ(result[0], 42);
 }
 
 TEST(SerializationTests, TestSerializeUint32) {
-    auto result = serialize_uint32(1234567890);
+    auto result = CRLRosWriter::serialize_uint32(1234567890);
     ASSERT_EQ(result.size(), 4);
     ASSERT_EQ(result[0], 210);
     ASSERT_EQ(result[1], 2);
@@ -26,18 +26,18 @@ TEST(SerializationTests, TestSerializeUint32) {
 }
 
 TEST(SerializationTests, TestSerializeUint64) {
-    auto result = serialize_uint64(1234567890123456789);
+    auto result = CRLRosWriter::serialize_uint64(1234567890123456789);
     ASSERT_EQ(result.size(), 8);
 }
 
 TEST(SerializationTests, TestSerializeTime) {
-    auto result = serialize_time(1234567890123456789);
+    auto result = CRLRosWriter::serialize_time(1234567890123456789);
     ASSERT_EQ(result.size(), 8);
 }
 
 // Header class tests
 TEST(HeaderTests, TestSetUint32) {
-    Header header;
+    CRLRosWriter::Header header;
     header.set_uint32("test", 1234567890);
     std::ostringstream stream;
     header.write(stream);
@@ -67,7 +67,7 @@ TEST(HeaderTests, TestSetUint32) {
 }
 
 TEST(HeaderTests, TestSetUint64) {
-    Header header;
+    CRLRosWriter::Header header;
     header.set_uint64("test", 1234567890123456789);
     std::ostringstream stream;
     header.write(stream);
@@ -78,7 +78,7 @@ TEST(HeaderTests, TestSetUint64) {
 }
 
 TEST(HeaderTests, TestSetString) {
-    Header header;
+    CRLRosWriter::Header header;
     header.set_string("test", "value");
     std::ostringstream stream;
     header.write(stream);
@@ -89,7 +89,7 @@ TEST(HeaderTests, TestSetString) {
 }
 
 TEST(HeaderTests, TestSetTime) {
-    Header header;
+    CRLRosWriter::Header header;
     header.set_time("test", 1234567890123456789);
     std::ostringstream stream;
     header.write(stream);
@@ -100,7 +100,7 @@ TEST(HeaderTests, TestSetTime) {
 }
 
 TEST(HeaderTests, TestWrite) {
-    Header header;
+    CRLRosWriter::Header header;
     header.set_string("key1", "value1");
     header.set_uint32("key2", 1234567890);
     std::ostringstream stream;
