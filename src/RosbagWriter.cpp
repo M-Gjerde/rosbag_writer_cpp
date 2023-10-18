@@ -80,7 +80,7 @@ namespace CRLRosWriter {
             chunk.pos = static_cast<int>(bio.tellp());
 
             Header header;
-            header.set_string("fileFormat", "none");
+            header.set_string("compression", "none");
             header.set_uint32("size", size);
             header.write(bio, RecordType::CHUNK);
 
