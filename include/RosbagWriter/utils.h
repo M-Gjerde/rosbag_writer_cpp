@@ -18,7 +18,7 @@ namespace CRLRosWriter {
         unsigned int md_len;
         std::string output;
 
-        EVP_DigestInit_ex2(context, md, NULL);
+        EVP_DigestInit_ex(context, md, nullptr);
         EVP_DigestUpdate(context, content.c_str(), content.length());
         EVP_DigestFinal_ex(context, md_value, &md_len);
         EVP_MD_CTX_free(context);
