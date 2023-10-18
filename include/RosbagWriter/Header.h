@@ -1,9 +1,13 @@
+#ifndef ROSBAGWRITER_HEADER_H
+#define ROSBAGWRITER_HEADER_H
+
 #include <cstdint>
 #include <string>
 #include <vector>
 #include <map>
 #include <sstream>
 #include <iostream>
+#include <climits>
 
 namespace CRLRosWriter {
 
@@ -146,3 +150,5 @@ namespace CRLRosWriter {
         }
     };
 };
+
+#endif // ROSBAGWRITER_HEADER_H

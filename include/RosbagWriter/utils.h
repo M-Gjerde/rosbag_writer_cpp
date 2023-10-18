@@ -1,3 +1,7 @@
+#ifndef ROSBAGWRITER_UTILS_H
+#define ROSBAGWRITER_UTILS_H
+
+
 #include <iostream>
 #include <string>
 #include <sstream>
@@ -106,3 +110,5 @@ namespace CRLRosWriter {
     }
 
 };
+
+#endif // ROSBAGWRITER_UTILS_H

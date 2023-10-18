@@ -1,4 +1,10 @@
+#ifndef ROSBAGWRITER_WRITER_H
+#define ROSBAGWRITER_WRITER_H
+
+
 #include <filesystem>
+#include <unordered_map>
+#include <fstream>
 
 #include <RosbagWriter/Header.h>
 #include <RosbagWriter/utils.h>
@@ -19,21 +25,20 @@ namespace CRLRosWriter {
 
     class RosbagWriter {
     public:
-        explicit RosbagWriter(const std::filesystem::path &filename) : path(filename), chunk_threshold(20 * (1 << 20)) {
+        explicit RosbagWriter() : chunk_threshold(20 * (1 << 20)) {
             chunks.emplace_back();
-            bio = std::fstream(filename, std::ios::out | std::ios::binary);
-            if (!bio) {
-                std::cerr << "Error: Could not open file " << path << std::endl;
-                std::cerr << "System error: " << strerror(errno) << std::endl;
-                exit(1);
-            }
+
         }
 
         Connection add_connection(const std::string &topic, const std::string &msg_type);
         void write(Connection &connection, int64_t timestamp, std::vector<uint8_t> data);
+        Connection getConnection(const std::string &topic, const std::string &msgType);
 
+        std::vector<uint8_t>
+        serializeImage(uint32_t sequence, int timestamp, uint32_t width, uint32_t height, uint8_t *pData, uint32_t dataSize,
+                       const std::string &encoding, uint32_t i);
 
-        void open();
+        void open(const std::filesystem::path &filename);
         ~RosbagWriter() {
             close();
 
@@ -43,6 +48,7 @@ namespace CRLRosWriter {
         }
 
     private:
+        bool opened = false;
         std::fstream bio;
         std::filesystem::path path;
         std::vector<int> message_offsets;
@@ -57,6 +63,10 @@ namespace CRLRosWriter {
         void write_chunk(WriteChunk &chunk);
 
         void close();
+
+        void writeHeader();
+        std::vector<uint8_t> serializerRosHeader(uint32_t sequence, int currentTimeNs);
+
     };
 
 };
@@ -158,3 +168,5 @@ std::vector<uint8_t> image_dummy(uint32_t i) {
 
 
  */
+
+#endif //  ROSBAGWRITER_WRITER_H
