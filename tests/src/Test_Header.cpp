@@ -122,6 +122,7 @@ TEST(WriterTests, functionality) {
 
     writer.open("MultiSense.bag");
     auto conn = writer.getConnection("/Hello_World", "std_msgs/String");
+    auto conn2 = writer.getConnection("/Hello_World", "sensor_msgs/Temperature");
     int64_t timestamp = 1;
 
     std::string str = "Hello world";

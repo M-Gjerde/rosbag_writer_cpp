@@ -41,16 +41,6 @@ namespace CRLRosWriter {
         return bytes;
     }
 
-    static std::vector<uint8_t> serialize_float64(double val) {
-        static_assert(sizeof(double) * CHAR_BIT == 64, "64-bit double is assumed.");
-        std::vector<uint8_t> bytes(8);
-        auto *bytePtr = reinterpret_cast<uint8_t *>(&val);
-        for (size_t i = 0; i < sizeof(double); ++i) {
-            bytes[i] = bytePtr[i];
-        }
-        return bytes;
-    }
-
 
     static std::vector<uint8_t> serialize_time(int64_t val) {
         auto sec = static_cast<int32_t>(val / 1000000000);
