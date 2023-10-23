@@ -111,6 +111,6 @@ namespace CRLRosWriter {
         return {string_msg_def, string_md5sum};
     }
 
-};
+}
 
 #endif // ROSBAGWRITER_UTILS_H
