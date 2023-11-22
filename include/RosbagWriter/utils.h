@@ -18,7 +18,7 @@ namespace CRLRosWriter {
         unsigned int md_len;
         std::string output;
 
-        EVP_DigestInit_ex2(context, md, NULL);
+        EVP_DigestInit_ex(context, md, nullptr);
         EVP_DigestUpdate(context, content.c_str(), content.length());
         EVP_DigestFinal_ex(context, md_value, &md_len);
         EVP_MD_CTX_free(context);
@@ -67,11 +67,6 @@ namespace CRLRosWriter {
         return result.str();
     }
 
-    static std::pair<std::string, std::string> getStringMd5sum() {
-        std::string string_msg_def = "string data";
-        std::string string_md5sum = computeMD5(string_msg_def);
-        return {string_msg_def, string_md5sum};
-    }
 
     static std::pair<std::string, std::string> getHeaderDef() {
         std::string header_msg_def = "uint32 seq\n"
@@ -83,7 +78,7 @@ namespace CRLRosWriter {
         return {normalized_header_message_def, header_generated_md5sum};
     }
 
-    static std::pair<std::string, std::string> getImageMd5sum() {
+    static inline std::pair<std::string, std::string> getImageMd5sum() {
         auto [header_def, header_md5sum] = getHeaderDef();
         std::string image_msg_def = header_md5sum + " header\n"
                                                     "uint32 height\n"
@@ -98,7 +93,8 @@ namespace CRLRosWriter {
         return {normalized_image_message_def, image_md5sum};
     }
 
-    static std::pair<std::string, std::string> getTemperatureDef() {
+
+    static inline std::pair<std::string, std::string> getTemperatureDef() {
         auto [header_def, header_md5sum] = getHeaderDef();
         std::string tmp_msg_def = header_md5sum + R"( header
     float64 temperature
@@ -109,6 +105,12 @@ namespace CRLRosWriter {
         return {normalized_tmp_message_def, tmp_md5sum};
     }
 
-};
+    static inline std::pair<std::string, std::string> getStringMd5sum() {
+        std::string string_msg_def = "string data";
+        std::string string_md5sum = computeMD5(string_msg_def);
+        return {string_msg_def, string_md5sum};
+    }
+
+}
 
 #endif // ROSBAGWRITER_UTILS_H

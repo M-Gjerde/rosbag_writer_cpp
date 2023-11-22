@@ -8,6 +8,7 @@
 #include <RosbagWriter/Header.h>
 #include <gtest/gtest.h>
 #include <cstring>
+#include "RosbagWriter/RosbagWriter.h"
 
 // Serialization tests
 TEST(SerializationTests, TestSerializeUint8) {
@@ -55,7 +56,7 @@ TEST(HeaderTests, TestSetUint32) {
     const char* serialized_uint32 = &output[pos + 5];
 
     // Expected little-endian representation of 1234567890
-    char expected_value[4];
+    unsigned char expected_value[4]; // assuming SIZE is some defined constant or value
     expected_value[0] = 0xD2;
     expected_value[1] = 0x02;
     expected_value[2] = 0x96;
@@ -114,6 +115,22 @@ TEST(HeaderTests, TestWrite) {
 
 
 }
+
+TEST(WriterTests, functionality) {
+
+    CRLRosWriter::RosbagWriter writer;
+
+    writer.open("MultiSense.bag");
+    auto conn = writer.getConnection("/Hello_World", "std_msgs/String");
+    auto conn2 = writer.getConnection("/Hello_World", "sensor_msgs/Temperature");
+    int64_t timestamp = 1;
+
+    std::string str = "Hello world";
+    std::vector<uint8_t> data;
+    data.insert(data.begin(), str.begin(), str.end());
+    writer.write(conn, timestamp, data);
+}
+
 
 
 

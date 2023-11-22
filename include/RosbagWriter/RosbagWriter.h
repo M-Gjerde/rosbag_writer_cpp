@@ -69,7 +69,7 @@ namespace CRLRosWriter {
 
     };
 
-};
+}
 
 /*
 std::vector<uint8_t> header_dummy() {

@@ -8,7 +8,7 @@ add_executable(test_main
 target_include_directories(test_main PRIVATE ${CMAKE_SOURCE_DIR}/include)
 
 # Link with GTest libraries
-target_link_libraries(test_main   GTest::gtest_main
+target_link_libraries(test_main   GTest::gtest_main -lssl -lcrypto rosbag_cpp_writer
 )
 
 # Automatically discover tests

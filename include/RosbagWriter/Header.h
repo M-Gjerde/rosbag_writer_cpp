@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <string>
+#include <utility>
 #include <vector>
 #include <map>
 #include <sstream>
@@ -40,20 +41,10 @@ namespace CRLRosWriter {
         return bytes;
     }
 
-    static std::vector<uint8_t> serialize_float64(double val) {
-        static_assert(sizeof(double) * CHAR_BIT == 64, "64-bit double is assumed.");
-        std::vector<uint8_t> bytes(8);
-        auto *bytePtr = reinterpret_cast<uint8_t *>(&val);
-        for (size_t i = 0; i < sizeof(double); ++i) {
-            bytes[i] = bytePtr[i];
-        }
-        return bytes;
-    }
-
 
     static std::vector<uint8_t> serialize_time(int64_t val) {
-        int32_t sec = static_cast<int32_t>(val / 1000000000);
-        int32_t nsec = static_cast<int32_t>(val % 1000000000);
+        auto sec = static_cast<int32_t>(val / 1000000000);
+        auto nsec = static_cast<int32_t>(val % 1000000000);
 
 
         std::vector<uint8_t> bytes = serialize_int32(sec);
@@ -66,15 +57,15 @@ namespace CRLRosWriter {
     struct Connection {
         int id;
         std::string topic;
-        std::string msgtype;
+        std::string msgType;
         std::string md5sum;
-        std::string msgdef;
+        std::string msgDef;
         int msgcount;
         void *owner = nullptr;  // object type is translated to void pointer for simplicity
-        Connection(int id, const std::string &topic, const std::string &msgtype, const std::string &md5Sum,
-                   const std::string &msgdef, int msgcount) : id(id), topic(topic), msgtype(msgtype),
-                                                              md5sum(md5Sum), msgdef(msgdef),
-                                                              msgcount(msgcount) {
+        Connection(int _id, std::string _topic, std::string _msgType, std::string _md5Sum,
+                   std::string _msgDef, int _msgCount) : id(_id), topic(std::move(_topic)), msgType(std::move(_msgType)),
+                                                              md5sum(std::move(_md5Sum)), msgDef(std::move(_msgDef)),
+                                                              msgcount(_msgCount) {
 
         }
 
@@ -145,10 +136,10 @@ namespace CRLRosWriter {
             output.insert(output.begin(), size_s.begin(), size_s.end());
 
 
-            dst.write(reinterpret_cast<const char *>(output.data()), output.size());
-            return output.size();
+            dst.write(reinterpret_cast<const char *>(output.data()), static_cast<uint32_t>(output.size()));
+            return static_cast<int>(output.size());
         }
     };
-};
+}
 
 #endif // ROSBAGWRITER_HEADER_H
