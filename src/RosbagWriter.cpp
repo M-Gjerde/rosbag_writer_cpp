@@ -123,7 +123,7 @@ namespace CRLRosWriter {
             tie(msg_def, md5sum) = getStringMd5sum();
         }
 
-        std::cout << "md5: " << md5sum << " for " << msg_type << std::endl;
+        //std::cout << "md5: " << md5sum << " for " << msg_type << std::endl;
         Connection connection(static_cast<int>(connections.size()), topic, msg_type, md5sum, msg_def, -1);
 //
         auto &chunkBio = chunks.back().data;
@@ -147,7 +147,7 @@ namespace CRLRosWriter {
     }
 
     void RosbagWriter::close() {
-        std::cout << "Closing" << std::endl;
+        //std::cout << "Closing" << std::endl;
         if (!bio.is_open()) return;
 
         for (WriteChunk &chunk: chunks) {
