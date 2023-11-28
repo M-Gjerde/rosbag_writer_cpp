@@ -38,11 +38,19 @@ target_include_directories(rosbag_cpp_writer PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/
 set_target_properties(rosbag_cpp_writer PROPERTIES LINKER_LANGUAGE CXX)
 set_project_warnings(rosbag_cpp_writer)
 
+# Add the include directories for the test executable
+add_library(rosbag_cpp_reader src/RosbagReader.cpp)
+target_include_directories(rosbag_cpp_reader PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+set_target_properties(rosbag_cpp_reader PROPERTIES LINKER_LANGUAGE CXX)
+set_project_warnings(rosbag_cpp_reader)
+
 
 if (UNIX) ## Linux
     target_link_libraries(rosbag_cpp_writer -lssl -lcrypto)
+    target_link_libraries(rosbag_cpp_reader -lssl -lcrypto)
 endif ()
 
 if (WIN32)
     target_link_libraries(rosbag_cpp_writer OpenSSL::SSL OpenSSL::Crypto)
+    target_link_libraries(rosbag_cpp_reader OpenSSL::SSL OpenSSL::Crypto)
 endif ()
