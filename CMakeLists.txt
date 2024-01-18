@@ -9,8 +9,8 @@ include(cmake/CompilerWarnings.cmake)
 
 
 # OpenSSL
-find_package(OpenSSL REQUIRED)
-include_directories(${OPENSSL_INCLUDE_DIR})
+#find_package(OpenSSL REQUIRED)
+#include_directories(${OPENSSL_INCLUDE_DIR})
 
 if (BUILD_TESTS)
     # GTest
@@ -44,5 +44,5 @@ if (UNIX) ## Linux
 endif ()
 
 if (WIN32)
-    target_link_libraries(rosbag_cpp_writer OpenSSL::SSL OpenSSL::Crypto)
+    #target_link_libraries(rosbag_cpp_writer OpenSSL::SSL OpenSSL::Crypto)
 endif ()
