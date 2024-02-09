@@ -4,13 +4,24 @@ project(rosbag_writer_cpp)
 set(CMAKE_CXX_STANDARD 20)
 
 option(BUILD_TESTS "Build tests for rosbag_writer_cpp" ON)
-
+set(BUILD_AS_VIEWER_DEPENDENCY ON)
 include(cmake/CompilerWarnings.cmake)
 
 
-# OpenSSL
-#find_package(OpenSSL REQUIRED)
-#include_directories(${OPENSSL_INCLUDE_DIR})
+if (${BUILD_AS_VIEWER_DEPENDENCY})
+    add_library(libsll_static STATIC IMPORTED GLOBAL)
+    set_target_properties(libsll_static PROPERTIES
+            IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+            IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/external/openssl_1.1.1/lib/libssl.lib")
+
+    add_library(libcrypto_static STATIC IMPORTED GLOBAL)
+    set_target_properties(libcrypto_static PROPERTIES
+            IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+            IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/external/openssl_1.1.1/lib/libcrypto.lib")
+else()
+    find_package(OpenSSL REQUIRED)
+    include_directories(${OPENSSL_INCLUDE_DIR})
+endif()
 
 if (BUILD_TESTS)
     # GTest
@@ -44,5 +55,6 @@ if (UNIX) ## Linux
 endif ()
 
 if (WIN32)
-    #target_link_libraries(rosbag_cpp_writer OpenSSL::SSL OpenSSL::Crypto)
+    target_link_libraries(rosbag_cpp_writer libsll_static libcrypto_static)
+    target_include_directories(rosbag_cpp_writer PUBLIC "${CMAKE_SOURCE_DIR}/external/openssl_1.1.1/include")
 endif ()
