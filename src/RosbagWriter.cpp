@@ -13,6 +13,7 @@
 #include <climits>
 #include <cerrno>
 #include <cstring>
+#include <algorithm>
 
 #include <RosbagWriter/RosbagWriter.h>
 
